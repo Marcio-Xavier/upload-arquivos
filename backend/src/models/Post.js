@@ -1,4 +1,10 @@
 const mongoose = require("mongoose");
+const aws = require("aws-sdk");
+const path = require("path");
+const fs = require("fs");
+const { promisify } = require("util");
+
+const s3 = new aws.S3();
 
 const PostScheema = new mongoose.Schema({
   name: String,
@@ -8,6 +14,27 @@ const PostScheema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  }
+});
+
+PostScheema.pre("save", function() {
+  if (!this.url) {
+    this.url = `${process.env.APP_URL}/files/${this.kay}`;
+  }
+});
+
+PostScheema.pre("remove", function() {
+  if (process.env.STORAGE_TYPE === "s3") {
+    return s3
+      .deleteObject({
+        Bucket: "upload-images-06022019",
+        Key: this.key
+      })
+      .promise();
+  } else {
+    return promisify(fs.unlink)(
+      path.resolve(__dirname, "..", "..", "tmp", "uploads", this.key)
+    );
   }
 });
 

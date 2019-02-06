@@ -1,17 +1,24 @@
+require("dotenv").config();
+
+var path = require("path");
 const express = require("express");
 const morgan = require("morgan"); //Log
 const mongoose = require("mongoose");
 
 const app = express();
 
-//Database setupe
-mongoose.connect("mongodb://localhost:27017/upload", {
+//Database setup
+mongoose.connect(process.env.MONGO_URL, {
   useNewUrlParser: true
 });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); //Facilitar o envio de arquivos padrão URL Encoded
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+app.use(
+  "/files",
+  express.static(path.resolve(__dirname, "..", "tmp", "uploads"))
+);
 
 app.use(require("./routes"));
 
